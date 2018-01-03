@@ -84,3 +84,26 @@ class DigitCapsuleLayer(nn.Module):
     def squash(self, x):
         x_norm = (x**2).sum(-1, keepdim=True)
         return (x_norm * x) / ( (1.0 + x_norm) * torch.sqrt(x_norm) )
+
+class DecoderNetwork(nn.Module):
+    def __init__(self, opt, num_input=16*10, num_ouput=784):
+        super(DecoderNetwork, self).__init__()
+
+        self.decoder = nn.Sequential()
+        self.decoder.add_module("fc1", nn.Linear(num_input, 512))
+        self.decoder.add_module("relu1", nn.ReLU(inplace=True))
+        self.decoder.add_module("fc2", nn.Linear(512, 1024))
+        self.decoder.add_module("relu2", nn.ReLU(inplace=True))
+        self.decoder.add_module("fc3", nn.Linear(1024, num_output))
+        self.decoder.add_module("sig1", nn.Sigmoid())
+
+    # x : 128 x 10 x 16 x 1
+    def forward(self, x):
+
+
+        mask = Variable(torch.sparse.torch.eye(10))
+        if self.opt.cuda:
+            mask = mask.cuda()
+
+
+        

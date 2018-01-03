@@ -39,8 +39,11 @@ def main():
                 data, taget = data.cuda(), target.cuda()
 
             optimizer.zero_grad()
-            output = capsule_network(data)
-            loss = capsule_network.margin_loss(output, target)
+            #output = capsule_network(data)
+            #loss = capsule_network.margin_loss(output, target)
+
+            output, recon_output = capsule_network(data)
+
             loss.backward()
             optimizer.step()
             train_loss += loss.data[0]
