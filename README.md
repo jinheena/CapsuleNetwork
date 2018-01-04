@@ -1,1 +1,1 @@
-# CapsuleNetwork (Progress)
+# A PyTorch implementation of Capsule Networks (in progress)

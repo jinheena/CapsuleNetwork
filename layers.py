@@ -86,9 +86,9 @@ class DigitCapsuleLayer(nn.Module):
         return (x_norm * x) / ( (1.0 + x_norm) * torch.sqrt(x_norm) )
 
 class DecoderNetwork(nn.Module):
-    def __init__(self, opt, num_input=16*10, num_ouput=784):
+    def __init__(self, opt, num_input=16*10, num_output=28*28):
         super(DecoderNetwork, self).__init__()
-
+        self.opt = opt
         self.decoder = nn.Sequential()
         self.decoder.add_module("fc1", nn.Linear(num_input, 512))
         self.decoder.add_module("relu1", nn.ReLU(inplace=True))
@@ -97,13 +97,23 @@ class DecoderNetwork(nn.Module):
         self.decoder.add_module("fc3", nn.Linear(1024, num_output))
         self.decoder.add_module("sig1", nn.Sigmoid())
 
-    # x : 128 x 10 x 16 x 1
+
+    # x (digit_cap_out) : 128 x 10 x 16 x 1
+    # Check : Do i need to use class label for masking?
     def forward(self, x):
-
-
-        mask = Variable(torch.sparse.torch.eye(10))
-        if self.opt.cuda:
-            mask = mask.cuda()
-
-
+        batch_size = x.size(0)
+        class_num = x.size(1)
         
+        x_mag= torch.sqrt( (x**2).sum(2) )
+        x_mag = F.softmax(x_mag)
+
+        max_val, max_idx = x_mag.max(dim=1)
+        mask = Variable(torch.sparse.torch.eye(class_num))
+        if self.opt.cuda==True:
+            mask = mask.cuda()
+        
+        mask = mask.index_select(dim=0, index=Variable(max_idx.squeeze(1).data))
+        x = (x.squeeze(3) * mask[:,:,None]).view(batch_size, -1)
+        recon = self.decoder(x).view(-1, 1, 28, 28)
+
+        return mask, recon

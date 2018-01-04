@@ -7,21 +7,20 @@ class CapsuleNetwork(nn.Module):
         self.conv_layer = ConvLayer()
         self.primary_capsules = PrimaryCapsLayer()
         self.digit_capsules = DigitCapsuleLayer(opt)
-        self.decorder = DecoderNetwork(opt)
-        self.mse_loss = nn.MSELoss()
+        self.decoder = DecoderNetwork(opt)
+        #self.mse_loss = nn.MSELoss()
 
     def forward(self, x):
-        #print 'x : {}'.format(x.shape)
         conv_out = self.conv_layer(x)
-        #print 'conv_out : {}'.format(conv_out.shape)
         primary_caps_out = self.primary_capsules(conv_out)
-        #print 'primary_caps_out : {}'.format(primary_caps_out.shape)
         digit_caps_out = self.digit_capsules(primary_caps_out)
-        recon_out, masked = self.decoder(x)
+        mask, recon = self.decoder(digit_caps_out)
         
-        return digit_caps_out
+        return digit_caps_out, mask, recon
+    
+    def mse_loss(self, input, target):
+        return torch.sum((input - target)**2) / input.data.nelement() 
 
-    # Eq. 4
     def margin_loss(self, y, y_gt, size_average=True):
         batch_size = y.size(0)
         v_mag = torch.sqrt((y**2).sum(dim=2, keepdim=True))
@@ -35,7 +34,6 @@ class CapsuleNetwork(nn.Module):
         pos_max = torch.max(zero,  m_plus - v_mag).view(batch_size, -1).view(batch_size, -1)**2
         neg_max = torch.max(zero, v_mag - m_minus).view(batch_size, -1).view(batch_size, -1)**2
         loss = y_gt * pos_max + m_lambda * (1.0 - y_gt) * neg_max
-        
         return loss.sum(dim=1).mean()
 
     def reconstruct_loss(self, x, x_gt):

@@ -36,45 +36,43 @@ def main():
             target = torch.sparse.torch.eye(10).index_select(dim=0, index=target)
             data, target = Variable(data), Variable(target)
             if opt.cuda==True:
-                data, taget = data.cuda(), target.cuda()
+                data, target = data.cuda(), target.cuda()
 
             optimizer.zero_grad()
             #output = capsule_network(data)
             #loss = capsule_network.margin_loss(output, target)
 
-            output, recon_output = capsule_network(data)
-
+            output, mask, recon = capsule_network(data)
+            loss = capsule_network.loss(output, target, recon, data)
             loss.backward()
+
             optimizer.step()
             train_loss += loss.data[0]
             
-            # if batch_id % 100 == 0:
-            #     print  "train accuracy:", (train_loss / float(opt.batch_size))
-                #print "train accuracy:", sum(np.argmax(masked.data.cpu().numpy(), 1) == 
-                #                    np.argmax(target.data.cpu().numpy(), 1)) / float(batch_size)
+            if batch_id % 100 == 0:
+                print "train accuracy:", sum(np.argmax(mask.data.cpu().numpy(), 1) == 
+                                   np.argmax(target.data.cpu().numpy(), 1)) / float(opt.batch_size)
             
         print train_loss / len(train_loader)
             
-        # capsule_net.eval()
-        # test_loss = 0
-        # for batch_id, (data, target) in enumerate(test_loader):
+        capsule_network.eval()
+        test_loss = 0
+        for batch_id, (data, target) in enumerate(test_loader):
+            target = torch.sparse.torch.eye(10).index_select(dim=0, index=target)
+            data, target = Variable(data), Variable(target)
+            if opt.cuda==True:
+                data, target = data.cuda(), target.cuda()
 
-        #     target = torch.sparse.torch.eye(10).index_select(dim=0, index=target)
-        #     data, target = Variable(data), Variable(target)
-        #     #if USE_CUDA:
-        #     if opt.cuda==True:
-        #         data, target = data.cuda(), target.cuda()
+            output, mask, recon = capsule_network(data)
+            loss = capsule_network.loss(output, target, recon, data)
 
-        #     output, reconstructions, masked = capsule_net(data)
-        #     loss = capsule_net.loss(data, output, target, reconstructions)
-
-        #     test_loss += loss.data[0]
+            test_loss += loss.data[0]
             
-        #     if batch_id % 100 == 0:
-        #         print "test accuracy:", sutrain_loaderm(np.argmax(masked.data.cpu().numpy(), 1) == 
-        #                             np.argmax(target.data.cpu().numpy(), 1)) / float(batch_size)
+            if batch_id % 100 == 0:
+                print "test accuracy:", sum(np.argmax(mask.data.cpu().numpy(), 1) == 
+                                    np.argmax(target.data.cpu().numpy(), 1)) / float(opt.batch_size)
         
-        # print test_loss / len(mnist.test_loader)
+        print test_loss / len(mnist.test_loader)
 
 
 if __name__ == "__main__":
