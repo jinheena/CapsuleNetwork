@@ -10,6 +10,8 @@ from torchvision import datasets, transforms
 from dataloader import get_mnist_data
 from network import CapsuleNetwork
 
+import cv2
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', required=True, help='mnist')
@@ -28,6 +30,7 @@ def main():
         capsule_network = capsule_network.cuda()
     optimizer = Adam(capsule_network.parameters())
     
+    cv2.namedWindow("recon", cv2.WINDOW_NORMAL)
     for epoch in range(opt.n_epochs):
         print 'epoch {}'.format(epoch)
         capsule_network.train()
@@ -45,10 +48,13 @@ def main():
             output, mask, recon = capsule_network(data)
             loss = capsule_network.loss(output, target, recon, data)
             loss.backward()
-
             optimizer.step()
             train_loss += loss.data[0]
-            
+
+            show_recon = recon[1].data.cpu().numpy()
+            cv2.imshow("recon", show_recon.reshape(28, 28))
+            cv2.waitKey(1)
+
             if batch_id % 100 == 0:
                 print "train accuracy:", sum(np.argmax(mask.data.cpu().numpy(), 1) == 
                                    np.argmax(target.data.cpu().numpy(), 1)) / float(opt.batch_size)
@@ -72,7 +78,9 @@ def main():
                 print "test accuracy:", sum(np.argmax(mask.data.cpu().numpy(), 1) == 
                                     np.argmax(target.data.cpu().numpy(), 1)) / float(opt.batch_size)
         
-        print test_loss / len(mnist.test_loader)
+            
+        print test_loss / len(test_loader)
+        
 
 
 if __name__ == "__main__":
