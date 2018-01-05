@@ -1,11 +1,11 @@
 # copy and modify from https://github.com/IBM/pytorch-seq2seq/blob/master/seq2seq/util/checkpoint.py
+
 from __future__ import print_function
 import os
 import time
 import shutil
 
 import torch
-import dill
 
 class Checkpoint(object):
     """
@@ -57,7 +57,6 @@ class Checkpoint(object):
             shutil.rmtree(path)
         os.makedirs(path)
         torch.save({'epoch': self.epoch,
-                    #'step': self.step,
                     'optimizer': self.optimizer
                    },
                    os.path.join(path, self.TRAINER_STATE_NAME))
