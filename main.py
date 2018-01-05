@@ -14,6 +14,7 @@ from dataloader import get_mnist_data
 from network import CapsuleNetwork
 from checkpoint import Checkpoint
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', required=True, help='mnist')
 parser.add_argument('--batch_size', type=int, help='input batch size', default=128)
@@ -53,6 +54,7 @@ def train(epoch, model, train_loader, test_loader, optimizer):
         loss.backward()
         optimizer.step()
         train_loss += loss.data[0]
+
         if batch_id % 100 == 0:
             print "epoch : {}, train accuracy : {}".format(epoch, 
                 sum(np.argmax(mask.data.cpu().numpy(), 1) == np.argmax(target.data.cpu().numpy(), 1)) / float(opt.batch_size) )
