@@ -45,8 +45,6 @@ def train(epoch, model, train_loader, test_loader, optimizer):
             data, target = data.cuda(), target.cuda()
 
         optimizer.zero_grad()
-        #output = model(data)
-        #loss = model.margin_loss(output, target)
 
         output, mask, recon = model(data)
         loss = model.loss(output, target, recon, data)
@@ -54,7 +52,7 @@ def train(epoch, model, train_loader, test_loader, optimizer):
         optimizer.step()
         train_loss += loss.data[0]
 
-        if batch_id % 100 == 0:
+        if batch_id % data.size(0) == 0:
             print "epoch : {}, train accuracy : {}".format(epoch, 
                 sum(np.argmax(mask.data.cpu().numpy(), 1) == np.argmax(target.data.cpu().numpy(), 1)) / float(opt.batch_size) )
 
@@ -67,7 +65,7 @@ def train(epoch, model, train_loader, test_loader, optimizer):
             cv2.imshow("recon", np.concatenate( (show_data, show_recon), axis = 1 ) )
             cv2.waitKey(1)
 
-            if batch_id % 100 == 0: # save reconstructed output
+            if batch_id % data.size(0) == 0: # save reconstructed output
                 save_name = '%s/recon_%d_%d.png' % (opt.save_folder, epoch, idx)
                 cv2.imwrite(save_name, show_recon*255)
                 
@@ -86,7 +84,7 @@ def train(epoch, model, train_loader, test_loader, optimizer):
 
         test_loss += loss.data[0]
         
-        if batch_id % 100 == 0:
+        if batch_id % data.size(0) == 0:
             print "test accuracy:", sum(np.argmax(mask.data.cpu().numpy(), 1) == 
                                 np.argmax(target.data.cpu().numpy(), 1)) / float(opt.batch_size)
     print test_loss / len(test_loader)
@@ -118,7 +116,6 @@ def run_test(model, test_loader):
             if max_idx[idx].data.cpu().numpy() != target[idx]:
                 num_error = num_error + 1
             num_data = num_data + 1
-        print opt.vis
         if opt.vis==True:
             idx = random.randint(0, data.size(0) - 1)
             show_recon = recon[idx].data.cpu().numpy().reshape(28,28)
