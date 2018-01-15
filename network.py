@@ -8,7 +8,6 @@ class CapsuleNetwork(nn.Module):
         self.primary_capsules = PrimaryCapsLayer()
         self.digit_capsules = DigitCapsuleLayer(opt)
         self.decoder = DecoderNetwork(opt)
-        #self.mse_loss = nn.MSELoss()
 
     def forward(self, x):
         conv_out = self.conv_layer(x)

@@ -13,18 +13,21 @@ from dataloader import get_mnist_data
 from network import CapsuleNetwork
 from checkpoint import Checkpoint
 
+def str2bool(v):
+    return v.lower() in ('true', '1')
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', required=True, help='mnist')
 parser.add_argument('--batch_size', type=int, help='input batch size', default=128)
 parser.add_argument('--n_epochs', type=int, help='number of epoch', default=15)
-parser.add_argument('--cuda', type=bool, help='enables cuda', default=True)
+parser.add_argument('--cuda', type=str2bool, help='enables cuda', default=True)
 parser.add_argument('--r_lambda', type=float, help='scale down factor of the reconstruction loss', default=0.0005)
-parser.add_argument('--vis', type=bool, help='Show reconstructed output', default=False)
-parser.add_argument('--recon_with_gt', type=bool, help='Use class label for reconstrucntion', default=False)
-parser.add_argument('--save_results', type=bool, help='Save trained model and images', default=True)
+parser.add_argument('--vis', type=str2bool, help='Show reconstructed output', default=False)
+parser.add_argument('--recon_with_gt', type=str2bool, help='Use class label for reconstrucntion', default=False)
+parser.add_argument('--save_results', type=str2bool, help='Save trained model and images', default=True)
 parser.add_argument('--save_folder', help='folder to save output image and model checkpoints', default='./out')
 parser.add_argument('--resume', help='resume training from the previous checkpoint', default=False)
-parser.add_argument('--is_train', help='start training ', default=True)
+parser.add_argument('--is_train', type=str2bool, help='start training ', default=True)
 
 opt = parser.parse_args()
 
@@ -105,9 +108,8 @@ def run_test(model, test_loader):
             data = data.cuda()
 
         output, mask, recon = model(data)
-
         out_mag= torch.sqrt( (output**2).sum(2) )
-        out_mag = F.softmax(out_mag)
+        out_mag = F.softmax(out_mag, dim=1)
         max_val, max_idx = out_mag.max(dim=1)
 
         

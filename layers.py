@@ -11,7 +11,6 @@ class ConvLayer(nn.Module):
     # x (NCWH) : 128 x 1 x 28 x 28
     # out (NCWH) : 128 x 256 x 20 x 20
     def forward(self,x):
-        x.shape
         return F.relu(self.conv(x))
 
 
