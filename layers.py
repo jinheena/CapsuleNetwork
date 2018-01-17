@@ -3,6 +3,29 @@ import torch.nn as nn
 import torch.nn.functional as F 
 from torch.autograd import Variable
 
+
+# The result of F.softmax with dim is strange at pytorch version 0.3.0.post4.
+# This temporary soft max is copied from https://github.com/cedrickchee/capsule-net-pytorch/blob/master/capsule_layer.py
+def softmax(input, dim=1):
+    """
+    nn.functional.softmax does not take a dimension as of PyTorch version 0.2.0.
+    This was created to add dimension support to the existing softmax function
+    for now until PyTorch 0.4.0 stable is release.
+    GitHub issue tracking this: https://github.com/pytorch/pytorch/issues/1020
+    Arguments:
+        input (Variable): input
+        dim (int): A dimension along which softmax will be computed.
+    """
+    input_size = input.size()
+
+    trans_input = input.transpose(dim, len(input_size) - 1)
+    trans_size = trans_input.size()
+    input_2d = trans_input.contiguous().view(-1, trans_size[-1])
+    soft_max_2d = F.softmax(input_2d)
+    soft_max_nd = soft_max_2d.view(*trans_size)
+
+    return soft_max_nd.transpose(dim, len(input_size) - 1)
+
 class ConvLayer(nn.Module):
     def __init__(self, in_channels=1, out_channels=256, kernel_size=9):
         super(ConvLayer, self).__init__()
@@ -67,10 +90,11 @@ class DigitCapsuleLayer(nn.Module):
         # v_j_cat : 128 x 1152 x 10 x 16 x 1
         # a_ij : 128 x 1152 x 10 x 1 x 1
         for iteration in range(num_iterations):
-            c_ij = F.softmax(b_ij)
+            #c_ij = F.softmax(b_ij, dim=1)
+            c_ij = softmax(b_ij, dim=1)
             c_ij_cat = torch.cat([c_ij] * batch_size, dim=0).unsqueeze(4)
-            s_ij = c_ij_cat * u_hat
-            #print 's_ij {}'.format( s_ij.shape)    # broadcasting
+            
+            s_ij = c_ij_cat * u_hat     # broad casting
             s_j = s_ij.sum(dim=1, keepdim=True)
             v_j = self.squash(s_j)
             if iteration < num_iterations:
@@ -104,7 +128,8 @@ class DecoderNetwork(nn.Module):
         class_num = x.size(1)
         
         x_mag= torch.sqrt( (x**2).sum(2) )
-        x_mag = F.softmax(x_mag)
+        #x_mag = F.softmax(x_mag, dim=1)
+        x_mag = softmax(x_mag, dim=1)
 
         max_val, max_idx = x_mag.max(dim=1)
         mask = Variable(torch.sparse.torch.eye(class_num))

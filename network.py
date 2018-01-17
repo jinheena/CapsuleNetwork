@@ -8,6 +8,7 @@ class CapsuleNetwork(nn.Module):
         self.primary_capsules = PrimaryCapsLayer()
         self.digit_capsules = DigitCapsuleLayer(opt)
         self.decoder = DecoderNetwork(opt)
+        self.r_lambda = opt.r_lambda
 
     def forward(self, x):
         conv_out = self.conv_layer(x)
@@ -35,9 +36,8 @@ class CapsuleNetwork(nn.Module):
         loss = y_gt * pos_max + m_lambda * (1.0 - y_gt) * neg_max
         return loss.sum(dim=1).mean()
 
-    def reconstruct_loss(self, x, x_gt):
-        r_lambda = 0.0005
-        return r_lambda * self.mse_loss(x.view(x.size(0), -1), x_gt.view(x_gt.size(0), -1))
+    def reconstruct_loss(self, x, x_gt):        
+        return self.r_lambda * self.mse_loss(x.view(x.size(0), -1), x_gt.view(x_gt.size(0), -1))
 
     def loss(self, y, y_gt, x, x_gt):
         return self.margin_loss(y, y_gt) + self.reconstruct_loss(x, x_gt)
