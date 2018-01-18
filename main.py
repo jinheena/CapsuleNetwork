@@ -49,7 +49,7 @@ def train(epoch, model, train_loader, test_loader, optimizer):
 
         optimizer.zero_grad()
 
-        output, mask, recon = model(data)
+        output, mask, recon = model(data, target)
         loss = model.loss(output, target, recon, data)
         loss.backward()
         optimizer.step()

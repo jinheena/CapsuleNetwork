@@ -5,7 +5,7 @@ from torch.autograd import Variable
 
 
 # The result of F.softmax with dim is strange at pytorch version 0.3.0.post4.
-# This temporary soft max is copied from https://github.com/cedrickchee/capsule-net-pytorch/blob/master/capsule_layer.py
+# This temporary soft max is copied from https://github.com/cedrickchee/capsule-net-pytorch/blob/master/utils.py
 def softmax(input, dim=1):
     """
     nn.functional.softmax does not take a dimension as of PyTorch version 0.2.0.
@@ -21,7 +21,7 @@ def softmax(input, dim=1):
     trans_input = input.transpose(dim, len(input_size) - 1)
     trans_size = trans_input.size()
     input_2d = trans_input.contiguous().view(-1, trans_size[-1])
-    soft_max_2d = F.softmax(input_2d)
+    soft_max_2d = F.softmax(input_2d, dim)
     soft_max_nd = soft_max_2d.view(*trans_size)
 
     return soft_max_nd.transpose(dim, len(input_size) - 1)
@@ -90,7 +90,7 @@ class DigitCapsuleLayer(nn.Module):
         # v_j_cat : 128 x 1152 x 10 x 16 x 1
         # a_ij : 128 x 1152 x 10 x 1 x 1
         for iteration in range(num_iterations):
-            #c_ij = F.softmax(b_ij, dim=1)
+            #c_ij = F.softmax(b_ij, dim=2)
             c_ij = softmax(b_ij, dim=1)
             c_ij_cat = torch.cat([c_ij] * batch_size, dim=0).unsqueeze(4)
             
@@ -123,7 +123,7 @@ class DecoderNetwork(nn.Module):
 
     # x (digit_cap_out) : 128 x 10 x 16 x 1
     # Check : Do i need to use class label for masking?
-    def forward(self, x):
+    def forward(self, x, y=None):
         batch_size = x.size(0)
         class_num = x.size(1)
         
@@ -137,7 +137,12 @@ class DecoderNetwork(nn.Module):
             mask = mask.cuda()
         
         mask = mask.index_select(dim=0, index=Variable(max_idx.squeeze(1).data))
-        x = (x.squeeze(3) * mask[:,:,None]).view(batch_size, -1)
+        if self.opt.recon_with_gt==False:
+            decorder_mask = mask
+        else:
+            decorder_mask = y
+
+        x = (x.squeeze(3) * decorder_mask[:,:,None]).view(batch_size, -1)
         recon = self.decoder(x).view(-1, 1, 28, 28)
 
         return mask, recon

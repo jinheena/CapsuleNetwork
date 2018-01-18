@@ -10,11 +10,11 @@ class CapsuleNetwork(nn.Module):
         self.decoder = DecoderNetwork(opt)
         self.r_lambda = opt.r_lambda
 
-    def forward(self, x):
+    def forward(self, x, y=None):
         conv_out = self.conv_layer(x)
         primary_caps_out = self.primary_capsules(conv_out)
         digit_caps_out = self.digit_capsules(primary_caps_out)
-        mask, recon = self.decoder(digit_caps_out)
+        mask, recon = self.decoder(digit_caps_out, y)
         
         return digit_caps_out, mask, recon
     
