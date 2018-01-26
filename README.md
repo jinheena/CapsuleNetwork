@@ -1,5 +1,5 @@
 # A PyTorch implementation of Capsule Network
-A Pytorch implementation of [Dynamic Routing Between Capsules]. / (https://papers.nips.cc/paper/6975-dynamic-routing-between-capsules.pdf) 
+A Pytorch implementation of [Dynamic Routing Between Capsules](https://papers.nips.cc/paper/6975-dynamic-routing-between-capsules.pdf) 
 ## How to run Training
 ```
 $ python main.py --dataset mnist
