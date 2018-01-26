@@ -26,7 +26,7 @@ parser.add_argument('--vis', type=str2bool, help='Show reconstructed output', de
 parser.add_argument('--recon_with_gt', type=str2bool, help='Use class label for reconstrucntion', default=False)
 parser.add_argument('--save_results', type=str2bool, help='Save trained model and images', default=True)
 parser.add_argument('--save_folder', help='folder to save output image and model checkpoints', default='./out')
-parser.add_argument('--resume', help='resume training from the previous checkpoint', default=False)
+parser.add_argument('--resume', type=str2bool, help='resume training from the previous checkpoint', default=False)
 parser.add_argument('--is_train', type=str2bool, help='start training ', default=True)
 
 opt = parser.parse_args()
@@ -136,12 +136,14 @@ def main():
     
     if opt.is_train==True:
         if opt.resume==True:
+            print 'hehehe'
             latest_checkpoint_path = Checkpoint.get_latest_checkpoint(opt.save_folder)
             resume_checkpoint = Checkpoint.load(latest_checkpoint_path)
             model = resume_checkpoint.model
             optimizer = resume_checkpoint.optimizer
             start_epoch = resume_checkpoint.epoch + 1
         else:
+            print 'hihih'
             start_epoch = 0
             optimizer = Adam(model.parameters())
         
