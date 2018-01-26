@@ -6,11 +6,11 @@ $ python main.py --dataset mnist
 ```
 ## How to run Testing
 ```
-$ python main.py --dataset mnist --is_train False
+$ python main.py --dataset mnist --is_train False --vis True
 ```
 ## How to run Training from checkpoint
 ```
-& python main.py --dataset mnist --is_train True --resume=True
+& python main.py --dataset mnist --is_train True --resume True
 ```
 # Author
 Jin Hee Na / jinheena@gmail.com

@@ -13,8 +13,18 @@ from dataloader import get_mnist_data
 from network import CapsuleNetwork
 from checkpoint import Checkpoint
 
-def str2bool(v):
-    return v.lower() in ('true', '1')
+_true_set = {'true', '1'}
+_false_set = {'false', '0'}
+def str2bool(value, raise_exc=True):
+    value = value.lower()
+    if value in _true_set:
+        return True
+    if value in _false_set:
+        return False
+    if raise_exc:
+        raise argparse.ArgumentTypeError('Expected "%s"' % '", "'.join(_true_set | _false_set))
+        
+    return None
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', required=True, help='mnist')
@@ -136,14 +146,12 @@ def main():
     
     if opt.is_train==True:
         if opt.resume==True:
-            print 'hehehe'
             latest_checkpoint_path = Checkpoint.get_latest_checkpoint(opt.save_folder)
             resume_checkpoint = Checkpoint.load(latest_checkpoint_path)
             model = resume_checkpoint.model
             optimizer = resume_checkpoint.optimizer
             start_epoch = resume_checkpoint.epoch + 1
         else:
-            print 'hihih'
             start_epoch = 0
             optimizer = Adam(model.parameters())
         
