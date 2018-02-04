@@ -18,8 +18,8 @@ class CapsuleNetwork(nn.Module):
         
         return digit_caps_out, mask, recon
     
-    def mse_loss(self, input, target):
-        return torch.sum((input - target)**2) / input.data.nelement() 
+    def mse_loss(self, x, target):
+        return torch.sum((x - target)**2) / x.data.nelement() 
 
     def margin_loss(self, y, y_gt, size_average=True):
         batch_size = y.size(0)
