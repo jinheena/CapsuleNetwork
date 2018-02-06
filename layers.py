@@ -25,7 +25,7 @@ class PrimaryCapsLayer(nn.Module):
     # out : 128 x 1152(=32x6x6) x 8      
     def forward(self, x):
         u = [capsule(x) for capsule in self.capsules]
-        u = torch.stack(u, dim=1)
+        u = torch.stack(u, dim=4)
         u = u.view(x.size(0), 32 * 6 * 6, -1)
         return  self.squash(u, dim=1)
     
