@@ -3,8 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F 
 from torch.autograd import Variable
 
-
-
 class ConvLayer(nn.Module):
     def __init__(self, in_channels=1, out_channels=256, kernel_size=9, stride=1):
         super(ConvLayer, self).__init__()
@@ -14,7 +12,6 @@ class ConvLayer(nn.Module):
     # out (NCWH) : 128 x 256 x 20 x 20
     def forward(self,x):
         return F.relu(self.conv(x))
-
 
 class PrimaryCapsLayer(nn.Module):
     def __init__(self, dim_capsules=8, in_channels=256, out_channels=32, kernel_size=9):
@@ -36,14 +33,12 @@ class PrimaryCapsLayer(nn.Module):
         return v_j
 
 class DigitCapsuleLayer(nn.Module):
-    #def __init__(self, opt, num_capsules=10, num_routes=32*6*6, in_channels=8, out_channels=16):
     def __init__(self, opt, num_capsules=10, num_routes=32*6*6, num_w=32, in_channels=8, out_channels=16):
         super(DigitCapsuleLayer, self).__init__()
         self.opt = opt
         self.num_capsules = num_capsules
         self.num_routes = num_routes
         self.W = nn.Parameter(torch.randn(1, num_w, num_capsules, out_channels, in_channels))
-
 
     # batch_size = 128
     # u : 128 x 1152(=32x6x6) x 8
@@ -71,10 +66,8 @@ class DigitCapsuleLayer(nn.Module):
         # v_j_cat : 128 x 1152 x 10 x 16 x 1
         # a_ij : 128 x 1152 x 10 x 1 x 1
         for iteration in range(num_iterations):
-
             c_ij = F.softmax(b_ij, dim=2)
-            c_ij_cat = torch.cat([c_ij] * batch_size, dim=0).unsqueeze(4)
-            
+            c_ij_cat = torch.cat([c_ij] * batch_size, dim=0).unsqueeze(4)           
             s_j = (c_ij_cat * u_hat).sum(dim=1, keepdim=True)
             v_j = self.squash(s_j, dim=3)
             if iteration < num_iterations:

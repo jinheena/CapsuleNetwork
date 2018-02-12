@@ -49,7 +49,6 @@ if opt.save_results:
             raise
 
 def train(epoch, model, train_loader, test_loader, optimizer):
-    model.train()
     train_loss = 0
     for batch_id, (data, target) in enumerate(train_loader):
         target = torch.sparse.torch.eye(10).index_select(dim=0, index=target)
@@ -65,9 +64,15 @@ def train(epoch, model, train_loader, test_loader, optimizer):
         optimizer.step()
         train_loss += loss.data[0]
 
-        if batch_id % data.size(0) == 0:
-            print "epoch : {}, train accuracy : {}".format(epoch, 
-                sum(np.argmax(mask.data.cpu().numpy(), 1) == np.argmax(target.data.cpu().numpy(), 1)) / float(opt.batch_size) )
+        # check accuracy of a batch
+        # if batch_id % data.size(0) == 0:
+        #     print "epoch : {}, batch_id: {}, train accuracy : {}".format(epoch + 1, batch_id, 
+        #         sum(np.argmax(mask.data.cpu().numpy(), 1) == np.argmax(target.data.cpu().numpy(), 1)) / float(opt.batch_size) )
+
+        # check error of a batch
+        # if batch_id % data.size(0)  == 0 or len(data) < opt.batch_size:
+        #     print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+        #         epoch, batch_id * opt.batch_size + data.size(0), len(train_loader.dataset), 100. * (batch_id + 1) / len(train_loader), loss.data[0]))
 
         if opt.vis==True:
             idx = random.randint(0, data.size(0) - 1)
@@ -81,11 +86,10 @@ def train(epoch, model, train_loader, test_loader, optimizer):
             if batch_id % data.size(0) == 0: # save reconstructed output
                 save_name = '%s/recon_%d_%d.png' % (opt.save_folder, epoch, idx)
                 cv2.imwrite(save_name, show_recon*255)
-                
-    print train_loss / len(train_loader)
 
     model.eval()
     test_loss = 0
+    num_correct = 0
     for batch_id, (data, target) in enumerate(test_loader):
         target = torch.sparse.torch.eye(10).index_select(dim=0, index=target)
         data, target = Variable(data), Variable(target)
@@ -96,11 +100,16 @@ def train(epoch, model, train_loader, test_loader, optimizer):
         loss = model.loss(output, target, recon, data)
 
         test_loss += loss.data[0]
-        
-        if batch_id % data.size(0) == 0:
-            print "test accuracy:", sum(np.argmax(mask.data.cpu().numpy(), 1) == 
-                                np.argmax(target.data.cpu().numpy(), 1)) / float(opt.batch_size)
-    print test_loss / len(test_loader)
+        num_correct = num_correct + sum(np.argmax(mask.data.cpu().numpy(), 1) == np.argmax(target.data.cpu().numpy(), 1))
+        # check accuracy of a batch
+        # if batch_id % data.size(0) == 0 or len(data) < opt.batch_size:
+        #     print "epoch: {}, batch_id: {}, test accuracy: {}".format(epoch + 1, batch_id, sum(np.argmax(mask.data.cpu().numpy(), 1) == 
+        #                         np.argmax(target.data.cpu().numpy(), 1)) / float(opt.batch_size) )
+
+    print '[Epoch {}] Training / Test Error / Test Accuracy : {:.4f} / {:.4f} / {:.4f} '.format(epoch + 1, 
+                                                                    train_loss / len(train_loader), test_loss / len(test_loader),
+                                                                    100. * num_correct / len(test_loader.dataset))
+
 
 def run_test(model, test_loader):
     latest_checkpoint_path = Checkpoint.get_latest_checkpoint(opt.save_folder)
@@ -121,7 +130,6 @@ def run_test(model, test_loader):
         out_mag= torch.sqrt( (output**2).sum(2) )
         out_mag = F.softmax(out_mag, dim=1)
         max_val, max_idx = out_mag.max(dim=1)
-
         
         for idx in range(data.size(0)):
             print "(batch_index, sample_index, estimated, target) : ", batch_id, idx, max_idx[idx].data.cpu().numpy(), target[idx]
